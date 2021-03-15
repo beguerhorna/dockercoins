@@ -13,7 +13,7 @@ spec:
     spec: 
       containers: 
         -
-          image: terferre/dockercoins:latest-rng
+          image: beguerhorna/dockercoins:latest-rng
           imagePullPolicy: Always
           ports: 
             -
@@ -36,7 +36,7 @@ spec:
     spec: 
       containers: 
         -
-          image: terferre/dockercoins:latest-hasher
+          image: beguerhorna/dockercoins:latest-hasher
           imagePullPolicy: Always
           ports: 
             -
@@ -90,7 +90,7 @@ spec:
     spec: 
       containers: 
         -
-          image: terferre/dockercoins:latest-webui
+          image: beguerhorna/dockercoins:latest-webui
           imagePullPolicy: Always
           ports: 
             -
@@ -113,7 +113,7 @@ spec:
     spec: 
       containers: 
         -
-          image: terferre/dockercoins:latest-worker
+          image: beguerhorna/dockercoins:latest-worker
           imagePullPolicy: Always
 ---
 apiVersion: v1
