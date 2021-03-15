@@ -2,7 +2,7 @@ name: CI
 on: 
   push:
     branches: 
-    - master
+    - docker
 jobs: 
   docker:
     runs-on: ubuntu-18.04
@@ -51,18 +51,13 @@ jobs:
         while true
           do \
             sleep 10
-            docker logs rng 2>& 1 | grep 'Running on' && break
-          done
-        while true
-          do \
-            sleep 10
             docker logs webui 2>& 1 | grep 'WEBUI running on port' && break
-          done
+          done  
         while true
           do \
             sleep 10
             docker logs worker 2>& 1 | grep 'Coin found' && break
-          done
+          done           
   swarm:
     runs-on: ubuntu-18.04
     steps:
@@ -94,7 +89,7 @@ jobs:
           do \
             sleep 10
             docker service logs ${project}_${project} 2>& 1 | grep 'PHP .* Development Server .* started' && break 
-          done      
+          done          
   kubernetes:
     runs-on: ubuntu-18.04
     steps:
