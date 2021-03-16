@@ -2,7 +2,7 @@ name: CI
 on: 
   push:
     branches: 
-    - master
+    - docker
 jobs: 
   docker:
     runs-on: ubuntu-18.04
@@ -12,57 +12,62 @@ jobs:
     - name: test
       run: |
         set -x
+        #construimos imágenes
         for app in hasher rng webui worker
           do \
             docker build -t beguerhorna/dockercoins:testing-${app} ${app}
           done
-        #creamos redes p cada uno
+        
+        #Creamos las redes
         for app in hasher redis rng webui worker
           do \
             docker network create ${app}
           done
-        #ejecyutamos container y creamos volumen
+        #Levantamos los contenedores
         docker run -d --name redis --network redis -v redis:/data redis
-        # 
-        for app in hasher rng webui worker 
+        for app in hasher rng webui worker
           do \
             docker run -d --name ${app} --network ${app} beguerhorna/dockercoins:testing-${app}
           done
-        #conectar los contenedores a las redes
+        #Los contenedores con varias redes hay que conectarlos a las correspondientes
         for app in webui worker
           do \
             docker network connect redis ${app}
           done
-        for network in hasher rng 
+        for network in hasher rng
           do \
             docker network connect ${network} worker
           done
-        #testear app
-        while true
+        #testear la aplicacion WEBUI
+        while true 
           do \
-            sleep 10
-            docker logs hasher 2>& 1 | grep '== Sinatra .* has taken the stage on .* for development with backup from Thin' && break
-          done
-        while true
-          do \
-            sleep 10
-            docker logs redis 2>& 1 | grep 'Ready to accept connections' && break
-          done
-        while true
-          do \
-            sleep 10
-            docker logs rng 2>& 1 | grep 'Running on' && break
-          done
-        while true
-          do \
-            sleep 10
+            sleep 5
             docker logs webui 2>& 1 | grep 'WEBUI running on port' && break
           done
+        #testear la aplicacion Redis
         while true
           do \
-            sleep 10
-            docker logs worker 2>& 1 | grep 'Coin found' && break
+            sleep 5
+            docker logs redis 2>& 1 | grep 'Ready to accept connections' && break
           done
+        #testear la aplicacion rng
+        while true 
+          do \
+            sleep 5
+            docker logs rng 2>& 1 | grep 'Running on' && break
+         done
+         #testear la aplicacion hasher
+         while true 
+           do \
+             sleep 5
+             docker logs hasher 2>& 1 | grep 'Sinatra (v2.1.0) has taken the stage on 8080 for development' && break
+           done
+         #testear la aplicacion worker
+         while true 
+           do \
+             sleep 5
+             docker logs worker 2>& 1 | grep 'Coin found' && break
+           done
   swarm:
     runs-on: ubuntu-18.04
     steps:
@@ -71,14 +76,14 @@ jobs:
     - name: test
       run: |
         set -x
-        #creo imagen image
+        #construimos imágenes
         for app in hasher rng webui worker
           do \
             docker build -t beguerhorna/dockercoins:testing-${app} ${app}
           done
         docker swarm init
         project=dockercoins
-        compose=etc/swarm/manifests/${project}.yaml
+        compose=etc/swarm/manifests/${project}.yml
         #sustituyo latest x testing y despliego con compose
         sed -i /image:/s/latest/testing/ ${compose}
         sed -i /node.role/s/worker/manager/ ${compose}
@@ -88,31 +93,35 @@ jobs:
         #kubectl apply -f ${compose}
         #desplioegue en swarm
         docker stack deploy -c ${compose} ${project}
-        while true
+        while true 
           do \
-            sleep 10
-            docker service logs ${project}_hasher 2>& 1 | grep '== Sinatra .* has taken the stage on .* for development with backup from Thin' && break
-          done
-        while true
-          do \
-            sleep 10
-            docker service logs ${project}_redis 2>& 1 | grep 'Ready to accept connections' && break
-          done
-        while true
-          do \
-            sleep 10
-            docker service logs ${project}_rng 2>& 1 | grep 'Running on' && break
-          done
-        while true
-          do \
-            sleep 10
+            sleep 5
             docker service logs ${project}_webui 2>& 1 | grep 'WEBUI running on port' && break
           done
+        #testear la aplicacion Redis
         while true
           do \
-            sleep 10
-            docker service logs ${project}_worker 2>& 1 | grep 'Coin found' && break
-          done        
+            sleep 5
+           docker service logs ${project}_redis 2>& 1 | grep 'Ready to accept connections' && break
+          done
+        #testear la aplicacion rng
+        while true 
+          do \
+            sleep 5
+            docker service logs ${project}_rng 2>& 1 | grep 'Running on' && break
+         done
+         #testear la aplicacion hasher
+         while true 
+           do \
+             sleep 5
+             docker service logs ${project}_hasher 2>& 1 | grep 'Sinatra (v2.1.0) has taken the stage on 8080 for development' && break
+           done
+         #testear la aplicacion worker
+         while true 
+           do \
+             sleep 5
+             docker service logs ${project}_worker 2>& 1 | grep 'Coin found' && break
+           done
   kubernetes:
     runs-on: ubuntu-18.04
     steps:
@@ -122,12 +131,12 @@ jobs:
       run: |
         set -x
         project=dockercoins
-        #creo imagen image
+        #construimos imágenes
         for app in hasher rng webui worker
-          do
+          do 
             docker build -t beguerhorna/${project}:testing-${app} ${app}
           done
-        #install kubernetes en ubunto
+        #install kubernetes en ubuntu
         sudo apt-get update -y
         #sudo apt-get install -y docker.io
         #sudo systemctl enable --now docker
@@ -160,7 +169,7 @@ jobs:
         master=$( kubectl get node | grep master | awk '{ print $1 }' ) 
         kubectl taint node ${master} node-role.kubernetes.io/master:NoSchedule-
         
-        compose=etc/kubernetes/manifests/${project}.yaml
+        compose=etc/kubernetes/manifests/${project}.yml
         #sustituyo latest x testing y despliego con compose
         sed -i /image:/s/latest/testing/ ${compose}
         sed -i /imagePullPolicy/s/Always/Never/ ${compose}
@@ -171,7 +180,7 @@ jobs:
         #desplioegue en swarm
         #docker stack deploy -c ${compose} ${project}
         app=hasher
-        pattern='== Sinatra .* has taken the stage on .* for development with backup from Thin'
+        pattern='Sinatra (v2.1.0) has taken the stage on 8080 for development'
         while true
           do 
             sleep 10
