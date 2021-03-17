@@ -13,7 +13,7 @@ spec:
     spec: 
       containers: 
         -
-          image: beguerhorna/dockercoins:latest-rng
+          image: beguerhorna/dockercoins:lastest-rng
           imagePullPolicy: Always
           name: rng
           ports: 
@@ -92,7 +92,7 @@ spec:
     spec: 
       containers: 
         -
-          image: beguerhorna/dockercoins:latest-webui
+          image: beguerhorna/dockercoins:lastest-webui
           imagePullPolicy: Always
           name: webui
           ports: 
@@ -116,7 +116,7 @@ spec:
     spec: 
       containers: 
         -
-          image: beguerhorna/dockercoins:latest-worker
+          image: beguerhorna/dockercoins:lastest-worker
           imagePullPolicy: Always
           name: worker
 ---
